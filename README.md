@@ -1,2 +1,2 @@
 # Python3
-###### This is a repository that holds most python projects 
+###### This is a repository that holds ~shitty~ python projects developed at the beginning of studying
