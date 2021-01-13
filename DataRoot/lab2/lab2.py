@@ -113,8 +113,7 @@ def debug(func):
     :param func: function
     """
     def decorator(*args):
-        print(func.__name__ + str(args) + ' was called and returned ' + str(func(*args)))
-        return func(*args)
+        return "'" + func.__name__ + str(args) + ' was called and returned ' + str(func(*args)) + "'"
     return decorator
 
 
@@ -123,7 +122,7 @@ def add(a, b):
     return a + b
 
 
-# add(3, 4)
+add(3, 4)
 
 
 class Conv:
@@ -153,10 +152,13 @@ class Conv:
         k = 0
         i = 10
         # while (rest := ((num - accum) % i)) != 0:
+        if num in self.val:
+            symbol_index = self.val.index(num)
+            return self.syb[symbol_index]
+
         while k != len(str(num)):
             temp_string = ''
             rest = (num - accum) % i
-            print(rest)
             if rest in self.val:
                 symbol_index = self.val.index(rest)
                 temp_string += self.syb[symbol_index]
@@ -178,7 +180,9 @@ class Conv:
         return roman_string
 
 
-# print('Converted:', Conv().to_roman(158))
+for i in range(1, 201):
+    print('Converted:', Conv().to_roman(i))
+print('Converted:', Conv().to_roman(20))
 
 
 class CombinationsList:
@@ -189,10 +193,10 @@ class CombinationsList:
         :param my_list: list
         :return: list[list]
         """
-        from itertools import combinations
+        import itertools
         combinations_list = list()
         for i in range(len(my_list)+1):
-            combinations_list.extend(map(list, combinations(my_list, i)))
+            combinations_list.extend(map(list, itertools.combinations(my_list, i)))
         return combinations_list
 
 
