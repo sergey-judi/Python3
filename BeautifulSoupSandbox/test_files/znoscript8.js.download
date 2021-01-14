@@ -1,0 +1,945 @@
+
+function openLastQuest(id){
+	var lastquest = getCookie('t'+id);
+	if(lastquest){ nextQuest(lastquest); }
+	clearSessionStorage();
+}
+
+function showButNxt(){
+	var parentEls = $('#q'+quest_id);
+	parentEls.find('.q-skip').addClass('element_hide');
+	parentEls.find('.q-next').removeClass('element_hide');
+	parentEls.find('.q-final').removeClass('element_hide');
+}
+
+function nextQuest(a){
+	if( a ){ 
+		var a = parseInt(a); 
+		window.quest_id = a; 
+	}else{
+		var a = quest_id + 1;		
+		window.quest_id = a; 
+	}
+	prNum(quest_id);
+	$('.number.current').removeClass('current');
+	$('.task-card').hide();
+	$('.number.q'+a).addClass('current');
+	$('#q'+a ).show();
+	$('#q'+a ).addClass('current');
+	window.scrollTo(0,150);
+	progressBar(a);
+	var offset = $('.q-progress-bar').offset();
+	window.scrollTo(0, offset.top - 1);
+	$('#waiting2').hide();
+}
+
+function askLastQuest(){
+	var refpath = getCurPath();
+	var ref = document.referrer.replace(window.location.protocol+'//'+window.location.host,'');
+	var rf = getCurPath(ref);
+	if( typeof getCookie(refpath[0]) === "undefined" ){ return; }	
+	var lastpage = getCookie(refpath[0]).split('|') || [0,0];
+	if( typeof lastpage[1] !== "undefined" && lastpage[1] && (!rf || !rf[1].match(/all/)) ){
+		if( lastpage[1] === window.location.pathname ){
+			nextQuest(lastpage[0]);
+		}else{
+			//console.log('lastpage('+lastpage[0]+'|'+lastpage[1]+'|'+lastpage[2]+' !== '+window.location.pathname+')');
+			if(confirm('Ви хочете продовжити з останнього переглянутого запитання?')){
+				window.location.pathname = lastpage[1];
+			}else{
+				setCookie(refpath[0], '', {path:refpath[2], expires:-1});
+			}
+		}
+	}
+}
+
+function getCurPath(path){
+	if(path){
+		var sect = path.split('/');
+	}else{
+		var sect = window.location.pathname.split('/');
+	}
+	var refpath = [];
+	
+	if( typeof sect[4] !== "undefined" && sect[4] != '' || sect[3] === "list.html" ){
+		refpath[0] = sect[1]+"_"+sect[2];
+		refpath[2] = "/"+sect[1]+"/"+sect[2]+"/";
+		if(sect[3] === "list.html"){			
+			refpath[1] = "/"+sect[1]+"/"+sect[2]+"/"+sect[3];
+		}else{
+			refpath[1] = "/"+sect[1]+"/"+sect[2]+"/"+sect[3]+"/"+sect[4]+"/";
+			refpath[3] = parseInt(sect[4])+1;
+		}		
+	}else{
+		refpath[0] = sect[1];
+		refpath[2] = "/"+sect[1]+"/";
+		if(sect[2] === "list.html"){			
+			refpath[1] = "/"+sect[1]+"/"+sect[2];
+		}else{
+			refpath[1] = "/"+sect[1]+"/"+sect[2]+"/"+sect[3]+"/";
+			refpath[3] = parseInt(sect[3])+1;
+		}
+	}
+	return refpath;	
+}
+
+function checkResult(){
+	var tip = parseInt($('#q'+quest_id+'-tip').val());
+	var date = new Date( new Date().getTime() + 7*24*60*60*1000 );
+	var refpath = getCurPath();
+	setCookie(refpath[0], quest_id+'|'+refpath[1], {path:refpath[2], expires:date.toUTCString()});
+	$('#q'+quest_id).addClass('checks');
+	$('#q'+quest_id+' .q-check').hide();
+	$('.tasks-numbers .current').addClass('views');
+	var result = $('input[name=result]', '#q'+quest_id).val();
+	if( tip>5 && tip<13 ){$('#q'+quest_id+' .otvet').show();}
+	if( result.indexOf(';') ){
+		var results = result.split(';');
+		for(var i=0; i<results.length; i++){
+			$('input[value='+results[i]+']', '#q'+quest_id).next().addClass('ok');
+		}
+		if(tip==6 || tip==7){
+			var ans1 = parseInt($('input[name="a[1]"]', '#q'+quest_id).val());
+			var ans2 = parseInt($('input[name="a[2]"]', '#q'+quest_id).val());
+			var ans3 = parseInt($('input[name="a[3]"]', '#q'+quest_id).val());
+			if (ans1 == results[0]){$('input[name="a[1]"]', '#q'+quest_id).addClass('ok');}
+			if (ans2 == results[1]){$('input[name="a[2]"]', '#q'+quest_id).addClass('ok');}
+			if (ans3 == results[2]){$('input[name="a[3]"]', '#q'+quest_id).addClass('ok');}
+		}
+	}else{
+		$('input[value='+result+']', '#q'+quest_id).next().addClass('ok');
+	}
+	//nextQuest(quest_id);
+	
+	if(typeof window.dataLayer !== "undefined"){ 
+		window.dataLayer.push({ 
+			'eventCategory':'ЗНО-онлайн',
+			'eventAction':'Перевірити', 
+			'event':'eventBtn',
+			'eventLabel':quest_id
+		});
+	}
+}
+
+function prNum(){ 
+	if( tpage && (tpage === 'list' || tpage === 'result') ){ return; }
+	var qmin = quest_id - 7;
+	var qmax = quest_id + 7;
+	if( tpage && tpage === 'list' ){ qmax = quest_id + 6; }
+	if( qfirst && qfirst > 1 ){ var qindex = qfirst - 1; }else{ var qindex = 0; }
+	if( qmin < 1 ){qmax = 1 + qmax - qmin; $('.num_left').remove();}
+	if( qmin > 1 && ! $('.num_left').length ){
+		$('.tasks-numbers').prepend('<span class="num_left gray">&#9664;</span>');
+	}
+	if( ! $('.num_right').length ){
+		$('.tasks-numbers').append('<span class="num_right gray">&#9654;</span>');
+	}
+	if( qmax > total ){$('.num_right').remove();}
+	$('.tasks-numbers').find(".number").each(function( index ) {
+		if( qindex+index < qmin || qindex+index > qmax ){
+			$(this).hide();
+		}else{
+			$(this).show();
+		}
+	});
+	//console.log('prNum('+qmin+', '+qmax+') quest_id='+quest_id);
+}
+
+function endResults(){
+	var a_href = $('#nextpage').attr('href');
+	var date = new Date( new Date().getTime() + 7*24*60*60*1000 );
+	var refpath = getCurPath(a_href);
+	setCookie(refpath[0], refpath[3]+'|'+refpath[1], {path:refpath[2], expires:date.toUTCString()});
+	//console.log('endResults('+refpath[0]+', '+refpath[3]+'|'+refpath[1]+', {path:'+refpath[2]+') pathname='+a_href);
+	window.location.pathname = a_href;
+}
+
+var mysend = {};
+
+(function () {
+    window.mysend = {};
+})();
+
+function getAnswerResult(qid){
+ 	console.log('getAnswerResult('+qid+')');
+	var qst = {};
+	qst.q = {};
+	qst.a = {};
+	$('#q_form_'+qid).find('input:hidden').each(
+		function(){
+			if( this.name.match(/q\[/g) ){
+				var n = this.name.replace("q[", "");
+				n = n.replace("]", "");
+				qst.q[n] = $(this).val();
+			}else{
+				var n = this.name;
+				qst[n] = $(this).val();
+			}
+		}
+	);
+	$('#q_form_'+qid).find('input:radio:checked').each(
+		function(){
+			if( this.name == 'a' ){
+				qst.a = $(this).val();
+			}
+			if( this.name.match(/a\[/g) ){
+				var n = this.name.replace("a[", "");
+				n = n.replace("]", "");
+				qst.a[n] = $(this).val();
+			}
+		}
+	);
+	$('#q_form_'+qid).find('input:text').each(
+		function(){
+			if( this.name == 'a' ){
+				qst.a = $(this).val();
+			}
+			if( this.name.match(/a\[/g) ){
+				var n = this.name.replace("a[", "");
+				n = n.replace("]", "");
+				qst.a[n] = $(this).val();
+			}
+		}
+	);
+	var d = new Date();
+	var n = parseInt((d.getTime())/1000);
+	qst.q['added'] = n;
+	if( qst['do'] !== undefined  ){ delete qst['do']; }
+	//if( qst.q['test'] !== undefined  ){ delete qst.q['test']; }
+	//if( qst.q['out_order'] !== undefined ){ delete qst.q['out_order']; }
+	//console.log( qst );
+	return qst;
+}
+
+function saveResult( mysend ){
+	var nxt = parseInt($('.number.q'+quest_id).next().html());
+	$('#q'+quest_id+' .q-next').addClass('element_hide');
+	$('.number.q'+quest_id).addClass('views'); /////
+	var refpath = getCurPath();
+	setCookie('t'+test_id, quest_id, {path:refpath[2], expires: 30*86400});
+	var qst = getAnswerResult(quest_id);
+	window.mysend[quest_id] = JSON.stringify(qst);
+	setSessionStorageItem(quest_id, qst);
+	
+	if(typeof window.dataLayer !== "undefined"){ 
+		window.dataLayer.push({ 
+			'eventCategory':'ЗНО-онлайн',
+			'eventAction':'Відповісти',
+			'event':'eventBtn',
+			'eventLabel':test_id+'|'+quest_id
+		});
+	}
+	nextQuest(nxt);
+}
+
+function endResult(){
+	window.scrollTo(0,0);
+	$('#waiting').show();
+	setTimeout(sendEndResult, 800);
+}
+
+function sendEndResult(){
+	setCookie('t'+test_id, 0, {path:'/', expires: -86400});	
+	var qst = getAnswerResult(quest_id);
+	setSessionStorageItem(quest_id, qst);
+	window.mysend[quest_id] = JSON.stringify(qst);
+	window.mysend['json'] = sessionStorage.getItem('test'+test_id);
+	
+	window.mysend['do'] = 'send_all_serdata';
+	window.mysend['znotest'] = test_id;
+	var evLabel = 'Завершити тест';
+	var action_url = '/users/znotest/';
+	if(typeof window.tag_id !== "undefined"){ 
+		window.mysend['tag_id'] = tag_id;
+		window.mysend['section'] = section;
+		window.mysend['total'] = total;
+		window.mysend['maxball'] = maxball;
+		window.mysend['list'] = list;
+		window.mysend['v'] = '100520';
+		evLabel = 'Завершити тему';
+		action_url = '/users/znotest/tag/';
+	}
+	console.log(action_url);
+	if(typeof window.savetemp !== "undefined"){ 
+		window.mysend['savetemp'] = window.savetemp;
+		console.log(window.savetemp);
+	}
+	if(typeof window.dataLayer !== "undefined"){ 
+		window.dataLayer.push({ 
+			'eventCategory':'ЗНО-онлайн',
+			'eventAction':evLabel, 
+			'event':'eventBtn',
+			'eventLabel':test_id
+		});
+	}
+
+	window.tpage = 'result';
+	progressBar(quest_id);
+	$.ajax({
+		url: action_url,
+		type: "POST",
+        data: window.mysend,
+        'timeout': 40000,
+		dataType: 'json', 
+		success: function(data){
+			if( data.ok && data.ok=='ok' ){
+				resultExit(data.result);
+				var refpath = getCurPath();
+				if(typeof data.result.savetemp !== "undefined"){
+					setCookie('tmp'+test_id, data.result_id, {path:refpath[2], expires: 180*86400});
+				}else{
+					setCookie('tmp'+test_id, 0, {path:refpath[2], expires: -86400});
+				}
+				if( checkUser() ){
+					if( typeof data.result.tag_id !== "undefined" && typeof data.result.progress !== "undefined" ){
+						if(typeof data.result.savetemp !== "undefined"){
+							removeStorageItem('section_tag_pr_'+section, data.result.tag_id);
+							if(data.result.progress){
+								addToStorageItem('section_temp_tag_pr_'+section, data.result.tag_id, data.result.progress);
+							}
+						}else{
+							removeStorageItem('section_temp_tag_pr_'+section, data.result.tag_id);
+							if(data.result.progress){
+								addToStorageItem('section_tag_pr_'+section, data.result.tag_id, data.result.progress);
+							}
+						}
+					}
+				}
+				$('.err_msg').remove();
+			}else{
+				$('#wrap').html('Помилка 1, немає результату... Запишіть час і тест та зверніться до адміністрації сайту...');				
+				if(typeof window.dataLayer !== undefined){ 
+					var osuid = getCookie('osuid') || 0;
+					var lbl = test_id+'|'+quest_id+'|'+osuid;
+					window.dataLayer.push({ 
+						'eventCategory':'ЗНО-онлайн',
+						'eventAction':'Помилка1', 
+						'event':'eventBtn',
+						'eventLabel':lbl
+					});
+				}
+			}
+			if( data.error ){
+				$('#waiting').html('<p>Помилка 2, немає результату... ' + data.error + '</p>' );
+				if(typeof window.dataLayer !== "undefined"){ 
+					var osuid = getCookie('osuid') || 0;
+					var lbl = test_id+'|'+quest_id+'|'+osuid;
+					window.dataLayer.push({ 
+						'eventCategory':'ЗНО-онлайн',
+						'eventAction':'Помилка2', 
+						'event':'eventBtn',
+						'eventLabel':lbl+'|'+data.error
+					});
+				}
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown){
+			var tget = new Date();
+			var res = tget.toLocaleString();
+			if( isPrem() ){
+				$('#wrap').before('<p class="err_msg">'+res+': <b>Помилка 3</b>, дані поки не отримано та результат, ймовірно, збережений <a href="/users/?do=profile" target="_blank">у профілі</a>.</p>' );
+			}else{
+				$('#wrap').before('<p class="err_msg">'+res+': <b>Помилка 3</b>, отримати результат поки не вдалось. <b>Зачекайте!</b> <br>Можливо, повільний інтернет. Або спробуйте ще раз.</p>' );
+			}			
+			$('#waiting').hide();
+			
+			if(typeof window.dataLayer !== "undefined"){ 
+				var osuid = getCookie('osuid') || 0;
+				var lbl = test_id+'|'+quest_id+'|'+osuid;
+				window.dataLayer.push({ 
+					'eventCategory':'ЗНО-онлайн',
+					'eventAction':'Помилка3', 
+					'event':'eventBtn',
+					'eventLabel':lbl+'|'+res
+				});
+			}
+			
+			window.mysend['textStatus'] = textStatus;
+			window.mysend['errorThrown'] = errorThrown;
+			sendTolog();
+		},
+	});
+}
+
+function clearSessionStorage() {
+	try {
+		sessionStorage.removeItem('test'+test_id);
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function setSessionStorageItem(key, obj) {
+	var item = {}; item[key] = obj;
+	var itemsTest = JSON.parse(sessionStorage.getItem('test'+test_id)) || {};
+	if( Object.keys(itemsTest).length === 0 ){
+		itemsTest = item;
+	}else{
+		itemsTest[key] = obj;
+	}	
+	try {
+		var json = JSON.stringify(itemsTest);
+		// json  = json.replace(/[\u007F-\uFFFF]/g, function(chr) {
+			// return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
+		// });
+		sessionStorage.setItem('test'+test_id, json);
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function getSessionStorageItem(key) {
+	var itemsTest = JSON.parse(sessionStorage.getItem('test'+test_id)) || {};
+	return itemsTest[key] || {};
+}
+
+function getSessionStorageItems() {
+	var itemsTest = JSON.parse(sessionStorage.getItem('test'+test_id)) || {};
+	return itemsTest;
+}
+
+function clearSessionStorageItem() {
+	sessionStorage.removeItem('test'+test_id);
+}
+
+/* ############### */
+
+function clearLocalStorage() {
+	try {
+		localStorage.removeItem('test'+test_id);
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function setLocalStorageItem(key, obj) {
+	var item = {}; item[key] = obj;
+	var itemsTest = JSON.parse(localStorage.getItem('test'+test_id)) || {};
+	if( Object.keys(itemsTest).length === 0 ){
+		itemsTest = item;
+	}else{
+		itemsTest[key] = obj;
+	}	
+	try {
+		var json = JSON.stringify(itemsTest);
+		// json  = json.replace(/[\u007F-\uFFFF]/g, function(chr) {
+			// return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
+		// });
+		localStorage.setItem('test'+test_id, json);
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function getLocalStorageItem(key) {
+	var itemsTest = JSON.parse(localStorage.getItem('test'+test_id)) || {};
+	return itemsTest[key] || {};
+}
+
+function getLocalStorageItems() {
+	var itemsTest = JSON.parse(localStorage.getItem('test'+test_id)) || {};
+	return itemsTest;
+}
+
+function clearLocalStorageItem() {
+	localStorage.removeItem('test'+test_id);
+}
+
+/* //############### */
+
+function addToStorageItem(name, key, obj) {
+	var items = JSON.parse(window.localStorage.getItem(name)) || {};
+	if( Object.keys(items).length === 0 ){
+		items = {};
+	}	
+	items[key] = obj;
+	try {
+		window.localStorage.setItem(name, JSON.stringify(items));
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function saveStorageItems(name, items) {
+	try {
+		window.localStorage.setItem(name, JSON.stringify(items));
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+function getStorageItem(name,key) {
+	var items = JSON.parse(window.localStorage.getItem(name)) || {};
+	return items[key] || {};
+}
+
+function getStorageItems(name) {
+	var items = JSON.parse(window.localStorage.getItem(name)) || {};
+	return items;
+}
+
+function removeStorageItem(name,key) {
+	var items = getStorageItems(name);
+	delete items[key];
+	saveStorageItems(name, items);
+}
+
+function clearStorageItems(name) {
+	try {
+		window.localStorage.removeItem(name);
+	} catch (e) {
+		console.log(e);
+	}
+}
+
+/* //############### */
+
+function resultExit(data){
+	$('.tasks-numbers').show();
+	$('.tasks-numbers').html(data.list);
+	$('#waiting').hide();
+	$('#wrap').html(data.quest);
+	var offset = $('#tasks-numbers').offset();
+	window.scrollTo(0, offset.top - 20);
+	if(typeof MathJax !== 'undefined'){MathJax.typesetPromise();}
+}
+
+function questExp(){
+	$('.number').show();
+	$('.num_left').hide();
+	$('.num_right').hide();
+	$('.task-card').show();
+}
+
+function progressBar(){
+	var id = quest_id - list;
+	var prc = parseInt(100*id/cnt);
+	if(prc>100){prc=100;}
+	$('.q-progress').css('width',prc+'%');
+}
+
+function login(){ 
+	toggleModal();
+	return false;
+}
+
+function logout(){ 
+	window.location = '/users/?do=logout';
+}
+
+function zStat(id){
+	var tz = getCookie('tz');
+	if( tz ){ 
+		$(".edinfo").show();	
+		if( id ){ $("body").append('<div class="elink"><a class="enk" target="_blank" href="'+tz+id+'/">'+id+'</a></div>'); }		
+	}
+}
+
+function sendTolog(){
+	//$.post('/users/tolog/', window.mysend, function(){} );
+	$.post('/users/tolog/', window.mysend, function(data){
+		if(data.ok && data.url){ 
+			$.get(data.url, function(data){	
+				if( data.ok && data.ok=='ok' ){
+					resultExit(data.result);
+					$('.err_msg').remove();
+				}
+			});
+		}
+	} );
+}
+
+// Голосуем за публикацию
+function addvotePubs(rate) {
+	//if (!getCookie("osuid")){login(); return ;}
+	$.post('/users/votepubs/',
+	{
+		"url":  document.location.href,
+		"section":  $('#inputsection').val(),
+		"rate": rate
+	},
+		function(data){
+			if(data.err){ $('.addvote').html(data.err); }
+			if(data.ok){  
+				$('#rate_isvote').html(data.ok); 
+				$('.addvote').html('Голос учтен!'); 
+				$('#rdf_votes').html(data.votes); 
+				$('#rdf_rating').html(data.rating); 
+			}
+		}
+	);
+}
+
+
+$(document).ready(function () {
+	var referrer = document.referrer;
+	if( !referrer.match(/zno\.osvita\.ua/g) ){
+		deleteCookie('osnow'); 
+		setCookie('osnow', 'no', {path:'/', domain: '.osvita.ua' }); 
+	}
+	checkUser();
+	if( $(window).width() < 620 ){
+		$('#wrap').find("img").each(function(index) {
+			var ptable = $( this ).parents("table").length;
+			if(parseInt($(this).attr('width')) > $(this).width() && !ptable){
+				$(this).addClass("tozoom");
+				toImgZoom($(this));
+			}
+		});
+	}
+	$('#wrap').on('click','img', function (){ 
+		//console.log(parseInt($(this).attr('width'))+' > '+$(this).width());
+		if( $(this).hasClass("zoomer") ){
+			$(this).removeClass("zoomer");			
+		}else{
+			if( parseInt($(this).attr('width')) > $(this).width()){
+				$(this).addClass("zoomer");
+			}			
+		}
+	});
+
+	$('.tasks-numbers').on('click','.num_left', function (){ 
+		$('.tasks-numbers').find(".number").each(function(index) {
+			if(index < quest_id){$(this).show();}
+		});
+		$('.num_left').remove();
+	});
+	$('.tasks-numbers').on('click','.num_right', function (){ 
+		$('.tasks-numbers').find(".number").each(function(index) {
+			if(index > quest_id){$(this).show();}
+		});
+		$('.num_right').remove();
+	});
+	$('.scroll-up').on('click', '.clk', function() {
+		$('html, body').animate({scrollTop: $('#main-content').offset().top }, 'fast' );
+	});
+	
+
+	$(document).bind("keydown", function (e) {
+		if(e.keyCode==13){
+			var is_test = $('#test-id').length;
+			if(is_test ){
+				alert('Щоб завершити тест позначте всі відповіді, \nта натисніть кнопку «Завершити тест»');
+				return false;
+			}else{
+				console.log('keyCode = ' + e.keyCode);
+			}
+		}
+	});
+	
+	$('.links-card').on('click','a', function (){ 
+		if(typeof window.dataLayer !== "undefined"){ 
+			var section = '';
+			if( typeof(window.test_id) === "undefined" ){
+				var sect = window.location.pathname.split('/');
+				var section = sect[1]+'_'+sect[2];
+			}else{
+				var section = test_id;
+			}
+			window.dataLayer.push({ 
+				'eventCategory':'ЗНО-онлайн',
+				'eventAction':'LinksNews', 
+				'event':'eventBtn',
+				'eventLabel':section
+			});
+		}
+	});
+	
+	$(window).on('resize scroll', function() {
+		if( $(window).scrollTop() > 1000 && $(window).width() > 390 ) {
+			$('.scroll-up').show();
+		}else{
+			$('.scroll-up').hide();
+		}
+	});
+	
+	$('.addvote').on('click', '.vote1', function (){ addvotePubs(1); })
+	$('.addvote').on('click', '.vote2', function (){ addvotePubs(2); })
+	$('.addvote').on('click', '.vote3', function (){ addvotePubs(3); })
+	$('.addvote').on('click', '.vote4', function (){ addvotePubs(4); })
+	$('.addvote').on('click', '.vote5', function (){ addvotePubs(5); })
+	
+});
+
+function getCookie(name) {
+	var matches = document.cookie.match(new RegExp(
+	  "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+	))
+	if (matches) { var result=decodeURIComponent(matches[1]).replace(/\+/g, ' '); }
+	//return matches ? decodeURIComponent(matches[1]) : undefined; 
+	return result ? result : undefined; 
+}
+
+// set cookie
+function setCookie(name, value, props) {
+	props = props || {}
+	var exp = props.expires;
+	if (typeof exp == "number" && exp){
+		if(exp === 1){ exp = -10800; }
+		var d = new Date();
+		d.setTime(d.getTime() + exp*1000);
+		exp = props.expires = d;
+	}
+	if(exp && exp.toUTCString) { props.expires = exp.toUTCString(); }
+	value = encodeURIComponent(value)
+	var updatedCookie = name + "=" + value;
+	for(var propName in props){
+		updatedCookie += "; " + propName;
+		var propValue = props[propName];
+		if(propValue !== true){ updatedCookie += "=" + propValue; }
+	}
+	//updatedCookie += "; SameSite=None"; // SameSite=Lax
+	updatedCookie += "; Secure";
+	document.cookie = updatedCookie;
+}
+
+function deleteCookie(name) {
+	setCookie(name, null, { expires:1 });
+	setCookie(name, null, { path: '/', expires:1, domain: '.osvita.ua' });
+}
+
+function checkUser() { 
+	if( getCookie('ost') ){
+		if( getCookie('osnow') != 'ok' ){
+			$.get('/users/check.php', function(data) {
+				if( data.ok==1 ){
+					if( data.order ){ 
+						setCookie('order', data.order, { expires: data.end, path: '/', domain: '.osvita.ua' });
+						setCookie('premium', data.premium, { expires: data.end, path: '/', domain: '.osvita.ua' });
+					}
+					if( getCookie('order') ){
+						if( getCookie('premium') ){
+							$(".profil.isuser").addClass('premium');
+							$(".nopremium").hide();
+						}
+					}
+					$(".nouser").hide();
+					$(".isuser").show();
+					$("#username").html(getCookie('osname')).show();			
+					$("#divRes").html('').show();
+					var osimg = getCookie("osimg");
+					if( osimg ){ $('#avatar').attr('src',osimg); }
+					setCookie('osnow', 'ok', {path:'/', domain: '.osvita.ua' });
+					return true;
+				}
+				if( data.err==1 ){
+					deleteCookie('ost');
+					deleteCookie('osuid');
+					deleteCookie('osname');
+					deleteCookie('osimg');
+					deleteCookie('osnow');
+					$('#unameform').removeClass("element_hide");
+					$(".nouser").show();
+					$(".isuser").hide();
+				}
+				return false;
+			});	
+		}else{
+			if( getCookie('order') ){
+				if( getCookie('premium') ){
+					$(".profil.isuser").addClass('premium');
+					$(".nopremium").hide();
+				}
+			}
+			$(".nouser").hide();
+			$(".isuser").show();
+			$("#username").html(getCookie('osname')).show();			
+			$("#divRes").html('').show();
+			var osimg = getCookie("osimg");
+			if( osimg ){ $('#avatar').attr('src',osimg); }
+			return true;
+		}
+	}else{
+		//$('#unameform').removeClass("element_hide");
+		deleteCookie('osnow');
+		deleteCookie('osuid');
+		deleteCookie('osname');
+		deleteCookie('osimg');
+		deleteCookie('ost');
+		return false;
+	}
+}
+
+function toImgZoom(el){ el.after('<div class="img_zoom">&#x1f50d;</div>'); }
+
+function hideEl(elem) { elem.addClass("element_hide"); }
+
+function showEl(elem) { elem.removeClass("element_hide"); }
+
+function toTopButton() {
+	if (($(window).width() > 1150) && ($(window).scrollTop() > 600)) {
+		$('.scroll-up').show();
+	} else {
+		$('.scroll-up').hide();
+	}
+}
+
+var _0x3dfc = [
+    '\x67\x65\x74\x49\x74\x65\x6d',
+    '\x73\x65\x74\x49\x74\x65\x6d',
+    '\x65\x78\x70\x69\x72\x65\x73',
+    '\x6f\x72\x64\x65\x72',
+    '\x70\x72\x65\x6d\x69\x75\x6d',
+    '\x63\x6f\x6d\x6f\x70\x5f',
+    '\x75\x6e\x64\x65\x66\x69\x6e\x65\x64',
+    '\x6c\x6f\x63\x61\x74\x69\x6f\x6e',
+    '\x70\x61\x74\x68\x6e\x61\x6d\x65',
+    '\x67\x65\x74\x45\x6c\x65\x6d\x65\x6e\x74\x42\x79\x49\x64',
+    '\x62\x74\x6e\x5f\x73\x68\x6f\x77\x5f',
+    '\x73\x74\x79\x6c\x65',
+    '\x64\x69\x73\x70\x6c\x61\x79',
+    '\x63\x6f\x6d\x6d\x65\x6e\x74\x61\x72\x5f',
+    '\x69\x6e\x6c\x69\x6e\x65\x2d\x62\x6c\x6f\x63\x6b',
+    '\x64\x61\x74\x61\x4c\x61\x79\x65\x72',
+    '\x65\x76\x65\x6e\x74\x43\x61\x74\x65\x67\x6f\x72\x79',
+    '\u0417\u041d\u041e\x2d\u043e\u043d\u043b\u0430\u0439\u043d',
+    '\x65\x76\x65\x6e\x74',
+    '\x65\x76\x65\x6e\x74\x42\x74\x6e',
+    '\x65\x76\x65\x6e\x74\x4c\x61\x62\x65\x6c',
+    '\x65\x76\x65\x6e\x74\x41\x63\x74\x69\x6f\x6e',
+    '\x73\x68\x6f\x77\x43\x6f\x6d\x6d\x65\x6e\x74',
+    '\x70\x75\x73\x68',
+    '\x68\x74\x74\x70\x73\x3a\x2f\x2f\x7a\x6e\x6f\x2e\x6f\x73\x76\x69\x74\x61\x2e\x75\x61\x2f\x70\x72\x65\x6d\x69\x75\x6d\x2e\x68\x74\x6d\x6c',
+    '\x5f\x62\x6c\x61\x6e\x6b',
+    '\u0412\u0438\x20\u0432\u0438\u0447\u0435\u0440\u043f\u0430\u043b\u0438\x20\u043b\u0456\u043c\u0456\u0442\x20\u0431\u0435\u0437\u043a\u043e\u0448\u0442\u043e\u0432\u043d\u043e\u0433\u043e\x20\u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434\u0443\x20\u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440\u0456\u0432\x20\u0443\x20\u0446\u044c\u043e\u043c\u0443\x20\u0442\u0435\u0441\u0442\u0456\x2e\x20\x0a\u0414\u043b\u044f\x20\u043f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f\x20\u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434\u0443\x20\u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440\u0456\u0432\x20\u0437\u0430\u0440\u0435\u0454\u0441\u0442\u0440\u0443\u0439\u0442\u0435\u0441\u044c\x20\u0442\u0430\x20\u043f\u0440\u0438\u0434\u0431\u0430\u0439\u0442\u0435\x20\u043f\u0440\u0435\u043c\u0456\u0443\u043c\x20\u0434\u043e\u0441\u0442\u0443\u043f\x20\u0443\x20\u0441\u0432\u043e\u0454\u043c\u0443\x20\u043f\u0440\u043e\u0444\u0456\u043b\u0456\x2e',
+    '\x2e\x65\x78\x70\x6c\x61\x6e\x61\x74\x69\x6f\x6e',
+    '\x63\x73\x73',
+    '\x62\x6c\x6f\x63\x6b',
+    '\x6c\x6f\x67',
+    '\x74\x65\x73\x74\x5f\x69\x64',
+    '\x73\x70\x6c\x69\x74',
+    '\x73\x65\x63\x74\x69\x6f\x6e\x3d',
+    '\x20\x7c\x20\x6f\x70\x3d',
+    '\x20\x7c\x20\x70\x72\x3d',
+    '\x68\x74\x6d\x6c',
+    '\x3c\x62\x3e\u041e\u0431\u043c\u0435\u0436\u0435\u043d\u043d\u044f\x21\x20\u041f\u0440\u0438\u0434\u0431\u0430\u0439\u0442\u0435\x20\u041f\u0440\u0435\u043c\u0456\u0443\u043c\x3c\x2f\x62\x3e\x20\x28\u0443\x20\u043f\u0440\u043e\u0444\u0456\u043b\u0456\x29\x3c\x62\x72\x3e\x3c\x62\x72\x3e'
+];
+var _0x3cdf = function (_0x3dfc69, _0x3cdf71) {
+    _0x3dfc69 = _0x3dfc69 - 0x0;
+    var _0x260926 = _0x3dfc[_0x3dfc69];
+    return _0x260926;
+};
+function zrtt(_0x1fd86a) {
+    var _0x286255 = parseInt(getCookie(_0x1fd86a)) || 0x0;
+    if (!_0x286255) {
+        _0x286255 = parseInt(sessionStorage[_0x3cdf('\x30\x78\x30')](_0x1fd86a)) || 0x0;
+    }
+    sessionStorage[_0x3cdf('\x30\x78\x31')](_0x1fd86a, _0x286255 + 0x1);
+    var _0x22c67b = {};
+    _0x22c67b[_0x3cdf('\x30\x78\x32')] = 0x15180;
+    setCookie(_0x1fd86a, _0x286255 + 0x1, _0x22c67b);
+    return _0x286255;
+}
+function isPrem() {
+    if (getCookie(_0x3cdf('\x30\x78\x33')) && getCookie(_0x3cdf('\x30\x78\x34'))) {
+        return !![];
+    }
+    return ![];
+}
+function showComment(_0xfa2e14) {
+    var _0x122ff3 = op = 0x0;
+    var _0x44c947 = _0x3cdf('\x30\x78\x35');
+    var _0x330cdb = '';
+    if (typeof window['\x74\x65\x73\x74\x5f\x69\x64'] === _0x3cdf('\x30\x78\x36')) {
+        var _0x40f791 = window[_0x3cdf('\x30\x78\x37')][_0x3cdf('\x30\x78\x38')]['\x73\x70\x6c\x69\x74']('\x2f');
+        var _0x330cdb = _0x40f791[0x1];
+    } else {
+        var _0x330cdb = test_id;
+    }
+    if (!checkUser()) {
+        login();
+        return;
+    }
+    var _0x44c947 = _0x44c947 + _0x330cdb;
+    _0x122ff3 = isPrem() || 0x0;
+    op = zrtt(_0x44c947);
+    if (_0x122ff3 || op < 0x5) {
+        document[_0x3cdf('\x30\x78\x39')](_0x3cdf('\x30\x78\x61') + _0xfa2e14)[_0x3cdf('\x30\x78\x62')][_0x3cdf('\x30\x78\x63')] = '\x6e\x6f\x6e\x65';
+        document['\x67\x65\x74\x45\x6c\x65\x6d\x65\x6e\x74\x42\x79\x49\x64'](_0x3cdf('\x30\x78\x64') + _0xfa2e14)[_0x3cdf('\x30\x78\x62')][_0x3cdf('\x30\x78\x63')] = _0x3cdf('\x30\x78\x65');
+        if (typeof window[_0x3cdf('\x30\x78\x66')] !== _0x3cdf('\x30\x78\x36')) {
+            var _0x184a99 = {};
+            _0x184a99[_0x3cdf('\x30\x78\x31\x30')] = _0x3cdf('\x30\x78\x31\x31');
+            _0x184a99['\x65\x76\x65\x6e\x74\x41\x63\x74\x69\x6f\x6e'] = '\x6f\x70\x65\x6e\x43\x6f\x6d\x6d\x65\x6e\x74';
+            _0x184a99[_0x3cdf('\x30\x78\x31\x32')] = _0x3cdf('\x30\x78\x31\x33');
+            _0x184a99[_0x3cdf('\x30\x78\x31\x34')] = _0x330cdb;
+            window[_0x3cdf('\x30\x78\x66')]['\x70\x75\x73\x68'](_0x184a99);
+        }
+    } else {
+        if (typeof window[_0x3cdf('\x30\x78\x66')] !== _0x3cdf('\x30\x78\x36')) {
+            var _0x59ce70 = {};
+            _0x59ce70[_0x3cdf('\x30\x78\x31\x30')] = _0x3cdf('\x30\x78\x31\x31');
+            _0x59ce70[_0x3cdf('\x30\x78\x31\x35')] = _0x3cdf('\x30\x78\x31\x36');
+            _0x59ce70['\x65\x76\x65\x6e\x74'] = '\x65\x76\x65\x6e\x74\x42\x74\x6e';
+            _0x59ce70[_0x3cdf('\x30\x78\x31\x34')] = _0x330cdb;
+            window[_0x3cdf('\x30\x78\x66')][_0x3cdf('\x30\x78\x31\x37')](_0x59ce70);
+        }
+        if (checkUser()) {
+            if (confirm('\u0412\u0438\x20\u0432\u0438\u0447\u0435\u0440\u043f\u0430\u043b\u0438\x20\u043b\u0456\u043c\u0456\u0442\x20\u0431\u0435\u0437\u043a\u043e\u0448\u0442\u043e\u0432\u043d\u043e\u0433\u043e\x20\u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434\u0443\x20\u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440\u0456\u0432\x20\u0443\x20\u0446\u044c\u043e\u043c\u0443\x20\u0442\u0435\u0441\u0442\u0456\x2e\x20\x0a\x0a\u0414\u043b\u044f\x20\u043f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f\x20\u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434\u0443\x20\u043a\u043e\u043c\u0435\u043d\u0442\u0430\u0440\u0456\u0432\x20\u043f\u0440\u0438\u0434\u0431\u0430\u0439\u0442\u0435\x20\u043f\u0440\u0435\u043c\u0456\u0443\u043c\x20\u0434\u043e\u0441\u0442\u0443\u043f\x20\u043d\u0430\u0442\u0438\u0441\u043d\u0443\u0432\u0448\u0438\x20\u043a\u043d\u043e\u043f\u043a\u0443\x20\u00ab\u041e\u041a\u00bb\x20\x28\u043f\u043e\u0442\u043e\u0447\u043d\u0456\x20\u0432\u0456\u0434\u043f\u043e\u0432\u0456\u0434\u0456\x20\u043d\u0435\x20\u0437\u0431\u0435\u0440\u0435\u0436\u0443\u0442\u044c\u0441\u044f\x29\x2c\x20\u0430\u0431\u043e\x20\u043d\u0430\u0442\u0438\u0441\u043d\u0456\u0442\u044c\x20\u00ab\u0412\u0456\u0434\u043c\u0456\u043d\u0430\u00bb\x20\u0434\u043b\u044f\x20\u043f\u0440\u043e\u0434\u043e\u0432\u0436\u0435\u043d\u043d\u044f\x20\u0440\u043e\u0431\u043e\u0442\u0438\x20\u043d\u0430\u0434\x20\u0442\u0435\u0441\u0442\u043e\u043c\x2e')) {
+                window['\x6f\x70\x65\x6e'](_0x3cdf('\x30\x78\x31\x38'), _0x3cdf('\x30\x78\x31\x39'));
+            }
+        } else {
+            alert(_0x3cdf('\x30\x78\x31\x61'));
+        }
+    }
+    return ![];
+}
+window['\x6f\x6e\x6c\x6f\x61\x64'] = function () {
+    setTimeout(function () {
+        var _0x4db88a = 0x0;
+        $(_0x3cdf('\x30\x78\x31\x62'))['\x65\x61\x63\x68'](function (_0x493156) {
+            if ($(this)[_0x3cdf('\x30\x78\x31\x63')](_0x3cdf('\x30\x78\x63')) == _0x3cdf('\x30\x78\x31\x64')) {
+                _0x4db88a++;
+            }
+        });
+        console[_0x3cdf('\x30\x78\x31\x65')]('\x63\x6e\x74\x64\x3d' + _0x4db88a);
+        if (typeof window[_0x3cdf('\x30\x78\x31\x66')] === _0x3cdf('\x30\x78\x36')) {
+            var _0x3d9b4d = window[_0x3cdf('\x30\x78\x37')][_0x3cdf('\x30\x78\x38')][_0x3cdf('\x30\x78\x32\x30')]('\x2f');
+            var _0x56620d = _0x3cdf('\x30\x78\x35') + _0x3d9b4d[0x1];
+        } else {
+            var _0x56620d = _0x3cdf('\x30\x78\x35') + test_id;
+        }
+        var _0x28eed8 = parseInt(getCookie(_0x56620d)) || 0x0;
+        if (!_0x28eed8) {
+            _0x28eed8 = parseInt(sessionStorage[_0x3cdf('\x30\x78\x30')](_0x56620d));
+        }
+        if (_0x4db88a && _0x28eed8 < _0x4db88a) {
+            sessionStorage[_0x3cdf('\x30\x78\x31')](_0x56620d, _0x4db88a);
+            var _0x43fb96 = {};
+            _0x43fb96[_0x3cdf('\x30\x78\x32')] = 0x3 * 0x15180;
+            setCookie(_0x56620d, _0x4db88a, _0x43fb96);
+            _0x28eed8 = _0x4db88a;
+        }
+        if (getCookie(_0x3cdf('\x30\x78\x33')) && getCookie(_0x3cdf('\x30\x78\x34'))) {
+            var _0x3964c4 = !![];
+        } else {
+            var _0x3964c4 = ![];
+        }
+        console['\x6c\x6f\x67'](_0x3cdf('\x30\x78\x32\x31') + _0x56620d + _0x3cdf('\x30\x78\x32\x32') + _0x28eed8 + _0x3cdf('\x30\x78\x32\x33') + _0x3964c4);
+        if (!_0x3964c4 && _0x28eed8 > 0x5) {
+            $(_0x3cdf('\x30\x78\x31\x62'))[_0x3cdf('\x30\x78\x32\x34')](_0x3cdf('\x30\x78\x32\x35'));
+        }
+    }, 0x3e8);
+};
+
+$(document).ready(function(){ 
+	// ONLY if user has many accounts, then help to remember
+	if(!getCookie('fnt2')){
+		var script = document.createElement('script');
+		script.src = "/doc/js/fingerprint2_2.1.0.js";
+		document.body.appendChild(script);
+		script.onload = function() {
+			//var options = {excludes: {touchSupport: true}};
+			var options = {};
+			Fingerprint2.get(options, function (components) {
+				var values = components.map(function (component) { return component.value });
+				var result = Fingerprint2.x64hash128(values.join(''), 31);
+				setCookie('fnt2', result, { expires: 86400*90, path: '/', domain: '.osvita.ua' });
+				//console.log('Fnt2 get: ' + result);
+			});
+		}
+	}else{
+		//console.log('fnt2: ' + getCookie('fnt2'));
+	}
+});
+
+

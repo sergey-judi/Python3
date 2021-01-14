@@ -30,7 +30,7 @@ def get_answers(task):
             letters = [letter for letter in letters if letter.isdigit()]
             answers_table = []
             for i in range(len(letters)):
-                answers_table.append(*zip(*answers[i*letters_num:(i+1)*letters_num]))
+                answers_table.append(list(answers[i*letters_num:(i+1)*letters_num]))
             answers = answers_table
         return dict(zip(letters, answers))
 
