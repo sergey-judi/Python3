@@ -25,6 +25,13 @@ def get_answers(task):
     if table:
         letters = [header.get_text(strip=True) for header in table.find_all('th') if header.get_text(strip=True)]
         answers = [option.get('class') for option in table.find_all('span')]
+        if any(map(str.isdigit, letters)):
+            letters_num = len(list(filter(lambda x: x.isalpha(), letters)))
+            letters = [letter for letter in letters if letter.isdigit()]
+            answers_table = []
+            for i in range(len(letters)):
+                answers_table.append(*zip(*answers[i*letters_num:(i+1)*letters_num]))
+            answers = answers_table
         return dict(zip(letters, answers))
 
 
@@ -42,7 +49,7 @@ def parse(url, from_file=True):
         task_num = task.find('div', {'class': 'counter'}).get_text(strip=True)
         answers = get_answers(task)
 
-        if answers and all(map(lambda x: x.isalpha(), answers.keys())):
+        if answers:
             print(task_num)
             print(f'Answers: {answers}')
 
