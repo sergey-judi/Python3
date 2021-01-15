@@ -38,23 +38,23 @@ def get_answers(task):
 
 def get_answers_schema(answers):
     answers_len = list(map(lambda x: len(x.values()), answers))
-
     schema_index = answers_len.index(max(answers_len))
-
     return list(answers[schema_index].keys())
 
 
 def get_right_answer(test_answer):
+    answers_table = dict()
     for letter, picked in test_answer.items():
         if 'ok' in picked:
             return letter
-        # if letter.isdigit():
-        #     return
+        if letter.isdigit():
+            answers_table[letter] = get_right_answer(picked)
+    return answers_table
 
 
 def parse(url, from_file=True):
     if from_file:
-        with open('index.html', encoding='utf-8') as file:
+        with open('test.html', encoding='utf-8') as file:
             html = file.read()
     else:
         html = get_html(url)
@@ -65,21 +65,15 @@ def parse(url, from_file=True):
     answers = []
 
     for task in get_tasks(html):
-        task_num = task.find('div', {'class': 'counter'}).get_text(strip=True)
-        # answers = get_answers(task)
-
         if s := get_answers(task):
             answers.append(s)
-            # print(task_num)
-            # print(f'Answers: {s}')
 
     schema = get_answers_schema(answers)
     print(schema)
 
     for answer in answers:
-        print(answer)
         right_answer = get_right_answer(answer)
-        # print(right_answer)
+        print(right_answer)
 
 
 def save_page(url):
