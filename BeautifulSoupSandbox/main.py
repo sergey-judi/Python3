@@ -52,6 +52,20 @@ def get_right_answer(test_answer):
     return answers_table
 
 
+def get_count_dict(answers, schema):
+    answers_dict = dict((letter, 0) for letter in schema)
+
+    for answer in answers:
+        right_answer = get_right_answer(answer)
+        if isinstance(right_answer, dict):
+            for letter in right_answer.values():
+                answers_dict[letter] += 1
+        elif right_answer.isalpha():
+            answers_dict[right_answer] += 1
+
+    return answers_dict
+
+
 def parse(url, from_file=True):
     if from_file:
         with open('test.html', encoding='utf-8') as file:
@@ -59,21 +73,22 @@ def parse(url, from_file=True):
     else:
         html = get_html(url)
 
-    tasks_num = len(get_tasks(html))
-    print(f'Total number of tasks: {tasks_num}')
-
     answers = []
 
     for task in get_tasks(html):
         if s := get_answers(task):
             answers.append(s)
 
-    schema = get_answers_schema(answers)
-    print(schema)
+    tasks_num = len(answers)
+    print(f'Total tasks done: {tasks_num}')
 
-    for answer in answers:
-        right_answer = get_right_answer(answer)
-        print(right_answer)
+    schema = get_answers_schema(answers)
+    print(f"Answers' schema: {schema}")
+
+    count_dict = get_count_dict(answers, schema)
+    print(f'Counted answers: {count_dict}')
+
+    return count_dict
 
 
 def save_page(url):
