@@ -27,10 +27,11 @@ def get_answers(task):
         answers = [option.get('class') for option in table.find_all('span')]
         if any(map(str.isdigit, letters)):
             letters_num = len(list(filter(lambda x: x.isalpha(), letters)))
-            letters = [letter for letter in letters if letter.isdigit()]
+            letters_table = [letter for letter in letters if letter.isdigit()]
             answers_table = []
             for i in range(len(letters)):
-                answers_table.append(list(answers[i*letters_num:(i+1)*letters_num]))
+                answers_table.append(dict(zip(letters, answers[i*letters_num:(i+1)*letters_num])))
+            letters = letters_table
             answers = answers_table
         return dict(zip(letters, answers))
 
@@ -53,7 +54,7 @@ def get_right_answer(test_answer):
 
 def parse(url, from_file=True):
     if from_file:
-        with open('test.html', encoding='utf-8') as file:
+        with open('index.html', encoding='utf-8') as file:
             html = file.read()
     else:
         html = get_html(url)
@@ -70,14 +71,15 @@ def parse(url, from_file=True):
         if s := get_answers(task):
             answers.append(s)
             # print(task_num)
-            # print(f'Answers: {answers}')
+            # print(f'Answers: {s}')
 
     schema = get_answers_schema(answers)
     print(schema)
 
     for answer in answers:
+        print(answer)
         right_answer = get_right_answer(answer)
-        print(right_answer)
+        # print(right_answer)
 
 
 def save_page(url):
