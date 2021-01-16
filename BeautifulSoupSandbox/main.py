@@ -44,11 +44,13 @@ def get_answers_schema(answers):
 
 def get_right_answer(test_answer):
     answers_table = dict()
+
     for letter, picked in test_answer.items():
         if 'ok' in picked:
             return letter
         if letter.isdigit():
             answers_table[letter] = get_right_answer(picked)
+
     return answers_table
 
 
@@ -71,7 +73,7 @@ def parse(url, from_file=True):
         with open('test.html', encoding='utf-8') as file:
             html = file.read()
     else:
-        html = get_html(url)
+        html = get_html(url).text
 
     answers = []
 
@@ -100,5 +102,6 @@ def save_page(url):
         raise Exception('Was not able to connect to the specified url')
 
 
-save_page(URL)
-parse(URL)
+if __name__ == '__main__':
+    save_page(URL)
+    parse(URL)
