@@ -39,6 +39,7 @@ def get_html(url, save_to_file=True):
 
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     capabilities = DesiredCapabilities.CHROME
     capabilities["pageLoadStrategy"] = "none"
