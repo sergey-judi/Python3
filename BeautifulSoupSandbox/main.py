@@ -1,9 +1,24 @@
+import json
+
 import requests
 import re
 from bs4 import BeautifulSoup
 
 HOST = 'https://zno.osvita.ua/'
 URL = 'https://zno.osvita.ua/mathematics/384/'
+SUBJECT_URLS = [
+    'https://zno.osvita.ua/ukrainian/',
+    'https://zno.osvita.ua/mathematics/',
+    'https://zno.osvita.ua/ukraine-history/',
+    'https://zno.osvita.ua/geography/',
+    'https://zno.osvita.ua/biology/',
+    'https://zno.osvita.ua/physics/',
+    'https://zno.osvita.ua/chemistry/',
+    'https://zno.osvita.ua/english/',
+    'https://zno.osvita.ua/german/',
+    'https://zno.osvita.ua/french/',
+    'https://zno.osvita.ua/spanish/'
+]
 HEADERS = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
@@ -68,6 +83,33 @@ def get_count_dict(answers, schema):
     return answers_dict
 
 
+def get_urls(host):
+    html = get_html(host).text
+
+    soup = BeautifulSoup(html, 'lxml')
+    li_items = soup.find_all('li', {'class': 'test-item'})
+
+    test_urls = []
+    for li_item in li_items:
+        test_url = host + li_item.find('a').get('href').split('/')[-2] + '/'
+        spans = li_item.find_all('span')
+        test_year = spans[0].get_text(strip=True).split()[0]
+        test_type = spans[-1].get_text(strip=True)
+        test_urls.append(
+            {
+                "url": test_url,
+                "year": test_year,
+                "type": test_type
+            }
+        )
+
+    subject = host.split('/')[-2]
+    file_name = subject + '.json'
+
+    with open('test_urls/' + file_name, mode='w') as file:
+        json.dump(test_urls, file, indent=4, ensure_ascii=False)
+
+
 def parse(url, from_file=True):
     if from_file:
         with open('test.html', encoding='utf-8') as file:
@@ -103,5 +145,7 @@ def save_page(url):
 
 
 if __name__ == '__main__':
-    save_page(URL)
-    parse(URL)
+    for subject_url in SUBJECT_URLS:
+        get_urls(subject_url)
+    # save_page(URL)
+    # parse(URL)
