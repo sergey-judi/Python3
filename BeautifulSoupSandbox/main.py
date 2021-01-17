@@ -48,7 +48,12 @@ def get_answers(task):
                 answers_table.append(dict(zip(letters, answers[i*letters_num:(i+1)*letters_num])))
             letters = letters_table
             answers = answers_table
-        return dict(zip(letters, answers))
+
+        task_dict = dict(zip(letters, answers))
+        if all(map(lambda x: not x, task_dict.values())):
+            return None
+        else:
+            return task_dict
 
 
 def get_answers_schema(answers):
@@ -76,7 +81,8 @@ def get_count_dict(answers, schema):
         right_answer = get_right_answer(answer)
         if isinstance(right_answer, dict):
             for letter in right_answer.values():
-                answers_dict[letter] += 1
+                if letter:
+                    answers_dict[letter] += 1
         elif right_answer.isalpha():
             answers_dict[right_answer] += 1
 
