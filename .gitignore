@@ -34,3 +34,4 @@ $RECYCLE.BIN/
 access_token.txt
 account_info.txt
 !CO-EST2015-alldata.pdf
+*.html
