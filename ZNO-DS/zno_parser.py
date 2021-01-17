@@ -43,9 +43,16 @@ def get_answers(task):
 
 
 def get_answers_schema(answers):
-    answers_len = list(map(lambda x: len(x.values()), answers))
+    answers_schema = []
+    for answer in answers:
+        if all(map(str.isdigit, answer.keys())):
+            answers_schema.append(answer['1'])
+        else:
+            answers_schema.append(answer)
+
+    answers_len = list(map(lambda x: len(x.values()), answers_schema))
     schema_index = answers_len.index(max(answers_len))
-    return list(answers[schema_index].keys())
+    return list(answers_schema[schema_index].keys())
 
 
 def get_right_answer(test_answer):
@@ -116,12 +123,13 @@ def parse(html, output=False):
             answers.append(s)
 
     tasks_num = len(answers)
-    schema = get_answers_schema(answers)
-    count_dict = get_count_dict(answers, schema)
-
     if output:
         print(f'Total tasks done: {tasks_num}')
+    schema = get_answers_schema(answers)
+    if output:
         print(f"Answers' schema: {schema}")
+    count_dict = get_count_dict(answers, schema)
+    if output:
         print(f'Counted answers: {count_dict}')
 
     return count_dict

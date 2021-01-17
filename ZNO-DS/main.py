@@ -70,7 +70,9 @@ def main():
             file_name = get_file_name(test)
             path = folder_name + '/' + file_name  + '.html'
             save_html(test['url'], path)
+            print(file_name)
             answers = parse_html(path)
+            print('---------------------------')
             all_answers.append(dict({'Тест': file_name}, **answers))
 
         data_folder_name = 'csv-data'
