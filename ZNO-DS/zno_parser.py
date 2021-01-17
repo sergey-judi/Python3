@@ -108,7 +108,7 @@ def get_urls(host, from_file=True):
     return test_urls
 
 
-def parse(html):
+def parse(html, output=False):
     answers = []
 
     for task in get_tasks(html):
@@ -116,13 +116,13 @@ def parse(html):
             answers.append(s)
 
     tasks_num = len(answers)
-    print(f'Total tasks done: {tasks_num}')
-
     schema = get_answers_schema(answers)
-    print(f"Answers' schema: {schema}")
-
     count_dict = get_count_dict(answers, schema)
-    print(f'Counted answers: {count_dict}')
+
+    if output:
+        print(f'Total tasks done: {tasks_num}')
+        print(f"Answers' schema: {schema}")
+        print(f'Counted answers: {count_dict}')
 
     return count_dict
 
