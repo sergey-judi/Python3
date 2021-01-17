@@ -52,7 +52,7 @@ def get_folder_name(subject_url):
 
 
 def save_csv(data, path_to_file):
-    header = data[0].keys()
+    header = zno_parser.get_answers_schema(data)
     with open(path_to_file, mode='w', encoding='utf-8', newline='') as file:
         writer = csv.DictWriter(file, header)
         writer.writeheader()
