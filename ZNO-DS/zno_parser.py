@@ -77,7 +77,12 @@ def get_count_dict(answers, schema):
                 if letter:
                     answers_dict[letter] += 1
         elif right_answer.isalpha():
-            answers_dict[right_answer] += 1
+            try:
+                answers_dict[right_answer] += 1
+            except KeyError as e:
+                if right_answer == "А":
+                    right_answer = 'A'
+                    answers_dict[right_answer] += 1
 
     return answers_dict
 
