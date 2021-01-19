@@ -1,6 +1,5 @@
 import csv
 import os
-import json
 import zno_driver
 import zno_parser
 
@@ -61,7 +60,7 @@ def save_csv(data, path_to_file):
 
 def main():
     for subject_url in SUBJECT_URLS:
-        tests = zno_parser.get_urls(subject_url, from_file=True)
+        tests = zno_parser.get_urls(subject_url)
         # print(json.dumps(urls, indent=4, ensure_ascii=False))
 
         all_answers = []

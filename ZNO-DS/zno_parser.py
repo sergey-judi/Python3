@@ -1,5 +1,5 @@
 import json
-
+import os
 import requests
 import re
 from bs4 import BeautifulSoup
@@ -87,12 +87,14 @@ def get_count_dict(answers, schema):
     return answers_dict
 
 
-def get_urls(host, from_file=True):
+def get_urls(host):
     subject = host.split('/')[-2]
     file_name = subject + '.json'
+    folder_name = 'zno_tests_urls'
+    path = folder_name + '/' + file_name
 
-    if from_file:
-        with open('zno_tests_urls/' + file_name, mode='r') as file:
+    if os.path.exists(path):
+        with open(path, mode='r') as file:
             test_urls = json.load(file)
     else:
         html = get_html(host).text
@@ -114,7 +116,7 @@ def get_urls(host, from_file=True):
                 }
             )
 
-        with open('zno_tests_urls/' + file_name, mode='w') as file:
+        with open(path, mode='w') as file:
             json.dump(test_urls, file, indent=4, ensure_ascii=False)
 
     return test_urls
@@ -128,13 +130,12 @@ def parse(html, output=False):
             answers.append(s)
 
     tasks_num = len(answers)
+    schema = get_answers_schema(answers)
+    count_dict = get_count_dict(answers, schema)
+
     if output:
         print(f'Total tasks done: {tasks_num}')
-    schema = get_answers_schema(answers)
-    if output:
         print(f"Answers' schema: {schema}")
-    count_dict = get_count_dict(answers, schema)
-    if output:
         print(f'Counted answers: {count_dict}')
 
     return count_dict
