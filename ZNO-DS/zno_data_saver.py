@@ -7,15 +7,15 @@ HOST = 'https://zno.osvita.ua/'
 SUBJECT_URLS = [
     'https://zno.osvita.ua/ukrainian/',
     'https://zno.osvita.ua/mathematics/',
-    # 'https://zno.osvita.ua/ukraine-history/',
-    # 'https://zno.osvita.ua/geography/',
-    # 'https://zno.osvita.ua/biology/',
-    # 'https://zno.osvita.ua/physics/',
-    # 'https://zno.osvita.ua/chemistry/',
-    # 'https://zno.osvita.ua/english/',
-    # 'https://zno.osvita.ua/german/',
-    # 'https://zno.osvita.ua/french/',
-    # 'https://zno.osvita.ua/spanish/'
+    'https://zno.osvita.ua/ukraine-history/',
+    'https://zno.osvita.ua/geography/',
+    'https://zno.osvita.ua/biology/',
+    'https://zno.osvita.ua/physics/',
+    'https://zno.osvita.ua/chemistry/',
+    'https://zno.osvita.ua/english/',
+    'https://zno.osvita.ua/german/',
+    'https://zno.osvita.ua/french/',
+    'https://zno.osvita.ua/spanish/'
 ]
 
 
