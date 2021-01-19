@@ -27,7 +27,7 @@ def submit_form(driver):
     time.sleep(3)
 
 
-def get_html(url, path_to_file=None):
+def get_html(url):
     chrome_driver = 'chromedriver.exe'
 
     options = webdriver.ChromeOptions()
@@ -44,10 +44,6 @@ def get_html(url, path_to_file=None):
     driver.execute_script("window.stop()")
 
     submit_form(driver)
-
-    if path_to_file:
-        with open(path_to_file, mode='w', encoding='utf-8') as file:
-            file.write(driver.page_source)
 
     html = driver.page_source
     driver.close()

@@ -21,21 +21,19 @@ SUBJECT_URLS = [
 
 def save_html(url, path_to_file):
     try:
-        if os.path.exists(path_to_file):
-            with open(path_to_file, mode='r', encoding='utf-8') as file:
-                html = file.read()
-        else:
-            html = zno_driver.get_html(url, path_to_file=path_to_file)
+        if not os.path.exists(path_to_file):
+            html = zno_driver.get_html(url)
+            with open(path_to_file, mode='w', encoding='utf-8') as file:
+                file.write(html)
             print(f'Successfully saved page {url}')
-        return html
     except Exception as e:
         print(f'Page {url} was not saved')
 
 
-def parse_html(path_to_file):
+def parse_html(path_to_file, output=False):
     with open(path_to_file, mode='r', encoding='utf-8') as file:
         html = file.read()
-    return zno_parser.parse(html)
+    return zno_parser.parse(html, output)
 
 
 def get_file_name(test):
@@ -58,21 +56,23 @@ def save_csv(data, path_to_file):
         writer.writerows(data)
 
 
-def main():
+def update_data(output=False):
     for subject_url in SUBJECT_URLS:
         tests = zno_parser.get_urls(subject_url)
         # print(json.dumps(urls, indent=4, ensure_ascii=False))
-
         all_answers = []
         for test in tests:
             folder_name = get_folder_name(subject_url)
             file_name = get_file_name(test)
-            path = folder_name + '/' + file_name  + '.html'
+            path = folder_name + '/' + file_name + '.html'
+
+            if output: print(file_name)
+
             save_html(test['url'], path)
-            print(file_name)
-            answers = parse_html(path)
-            print('---------------------------')
+            answers = parse_html(path, output)
             all_answers.append(dict({'Тест': file_name}, **answers))
+
+            if output: print('---------------------------')
 
         data_folder_name = 'csv-data'
         subject_name = get_folder_name(subject_url)
@@ -82,4 +82,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    update_data(True)
