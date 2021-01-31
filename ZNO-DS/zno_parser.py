@@ -90,7 +90,7 @@ def get_count_dict(answers, schema):
 def get_urls(host):
     subject = host.split('/')[-2]
     file_name = subject + '.json'
-    folder_name = 'zno_tests_urls'
+    folder_name = 'zno-tests-urls'
     path = folder_name + '/' + file_name
 
     if os.path.exists(path):
